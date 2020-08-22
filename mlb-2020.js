@@ -1,6 +1,7 @@
 var games = [];
+var sn = null; // for testing
 
-const FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta Braves","#13274F","ATL","NL","East"),
+var FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta Braves","#13274F","ATL","NL","East"),
     new Franchise("Baltmore Orioles","#DF4601","BAL","AL","East"),new Franchise("Boston Red Sox","#BD3039","BOS","AL","East"),
     new Franchise("Chicago Cubs","#0E3386","CHC","NL","Central"),new Franchise("Chicago White Sox","#27251F","CHW","AL","Central"),
     new Franchise("Cincinnati Reds","#C6011F","CIN","NL","Central"),new Franchise("Cleveland Indians","#E31937","CLE","AL","Central"),
@@ -25,9 +26,10 @@ $(document).ready(function(){
         }
         games.shift();
         console.log(games);
-        var sn = new Season(generateTeams(FRANCHISES),games);
+        sn = new Season(generateTeams(FRANCHISES),games);
         sn.playSeason();
-        console.log(sn);
+        sn.populatePlayoffs();
+        console.log(sn.playoffs);
     });
 });
 
@@ -68,18 +70,15 @@ function Game(arr){
         if(!this.finished){
             this.adjudicate();
         }
-        var div = true; //change this to make it work -- asks if game is a divisional game
+        var div = isDivisional(this.team1, this.team2);
         var w = this.winner;
         var l = this.loser;
         return tm.map(function(t){
             if(t.abbreviation==w){
-                console.log("won");
-                return t.winGame(div);
+                return t.winGame(div,l);
             }else if(t.abbreviation==l){
-                console.log("lost");
-                return t.playGame(div);
+                return t.playGame(div,false,w);
             }else{
-                console.log("skipped, "+t.abbreviation+"≠ ("+w+" or "+l+")");
                 return t;
             }
         });
@@ -92,9 +91,23 @@ function Franchise(name,hex,abbrev,lg,div){
     this.color = hex;
     this.league = lg;
     this.division = div;
-    this.wins = [];
-    this.seeds = [];
-    this.opponents = [];
+    this.wins = new Tally();
+    this.seeds = new Tally();
+    this.opponents = new Tally();
+    this.sortTallies = function(){
+      this.wins.sort();
+      this.seeds.sort();
+      this.opponents.sort();
+    };
+    this.tallySeason = function(season){
+        var wins = season.teams.find(x => x.abbreviation==this.abbreviation).wins;
+        var playoffs = season.teams.findIndex(x => x.abbreviation==this.abbreviation);
+        if(playoffs!=1 && this.league=="NL"){playoffs-=8;}
+        var opp = findOpponent(season.playoffs,playoffs, this.league);
+        this.wins.add(wins);
+        this.seeds.add(playoffs);
+        this.opponents.add(opp);
+    }
 }
 
 function Team(name,abbrev,lg,div){
@@ -105,24 +118,32 @@ function Team(name,abbrev,lg,div){
     this.wins = 0;
     this.games = 0;
     this.divwins = 0;
+    this.gamelog = [];
     this.divgames = 0;
-    this.seed = 0;
-    this.opponent = "n/a";
-    this.winGame = function(div){
+    this.winGame = function(div,opp){
         this.wins++;
         if(div){
             this.divwins++;
         }
-        console.log("team-won");
-        return this.playGame();
+        return this.playGame(div,true,opp);
     };
-    this.playGame = function(div){
+    this.playGame = function(div,won,opp){
         this.games++;
-        console.log("team-played");
         if(div){
             this.divgames++;
         }
+        this.gamelog.push([opp,won]);
         return this;
+    };
+    this.wpct = function(){
+        return this.wins/this.games;
+    };
+    this.dwpct = function(){
+        return this.divwins/this.divgames;
+    };
+    this.hthwp = function(opp){
+          var games = this.gamelog.filter(x => x[0]==opp);
+          return games.reduce((acc, x) => x[1] ? acc + 1 : acc, 0)/games.length;
     };
 }
 
@@ -135,13 +156,80 @@ function Season(teams, games){
         for(game of this.games){
             this.teams = game.play(this.teams);
         }
-    }
+    };
+    this.sortStandings = function(){
+        this.teams.sort(playoffSort); //add more robust tiebreakers later
+    };
+    this.populatePlayoffs = function(){
+        this.sortStandings();
+        var alwest = this.teams.filter(x=> (x.division=="West" && x.league=="AL"));
+        var alcent = this.teams.filter(x=> (x.division=="Central" && x.league=="AL"));
+        var aleast = this.teams.filter(x=> (x.division=="East" && x.league=="AL"));
+        var nlwest = this.teams.filter(x=> (x.division=="West" && x.league=="NL"));
+        var nlcent = this.teams.filter(x=> (x.division=="Central" && x.league=="NL"));
+        var nleast = this.teams.filter(x=> (x.division=="East" && x.league=="NL"));
+        var aldivwinners = [alwest[0],alcent[0],aleast[0]].sort(playoffSort);
+        var aldivrunnersup = [alwest[1],alcent[1],aleast[1]].sort(playoffSort);
+        var alwildcards = [...alwest.slice(2), ...alcent.slice(2), ...aleast.slice(2)].sort(playoffSort);
+        var nldivwinners = [nlwest[0],nlcent[0],nleast[0]].sort(playoffSort);
+        var nldivrunnersup = [nlwest[1],nlcent[1],nleast[1]].sort(playoffSort);
+        var nlwildcards = [...nlwest.slice(2), ...nlcent.slice(2), ...nleast.slice(2)].sort(playoffSort);
+        this.playoffs = [...aldivwinners, ...aldivrunnersup, ...alwildcards.slice(0,2), ...nldivwinners, ...nldivrunnersup, ...nlwildcards.slice(0,2)];
+    };
+}
+
+function Tally(){
+    this.tally = [];
+    this.count = 0;
+    this.sort = function(){
+      this.tally.sort((a, b) => b[1]-a[1]);
+    };
+    this.tallied = function(item){
+        return tally.map(x => x[0]).includes(item);
+    };
+    this.tallyInstance = function(item){
+        this.tally = this.tally.map(x => (x[0]==item) ? [x[0],x[1]+1] : x);
+        this.count++;
+    };
+    this.addInstance = function(item){
+        this.count++;
+        this.tally.push([item, 1]);
+    };
+    this.add = function(item){
+        if(this.tallied(item)){
+            this.tallyInstance(item);
+        }else{
+            this.addInstance(item);
+        }
+    };
 }
 
 function generateTeams(franch){
     return franch.map(x => new Team(x.name,x.abbreviation,x.league,x.division));
 }
 
-// function isDivisional(a,b) {
-//     //go through all divisions and see if 2 teams occupy them
-// }
+function playoffSort(a,b){
+    if(a.wpct()!=b.wpct()){
+        return b.wpct()-a.wpct();
+    }else if(a.hthwp(b.abbreviation)!=.5){
+        return .5-a.hthwp(b.abbreviation);
+    }else if(a.dwpct()!=b.dwpct()){
+        return b.dwpct()-a.dwpct();
+    }else{
+        return Math.random()<.5;
+    }
+}
+
+function isDivisional(a,b) {
+    return DIVISIONS.map(x => x.reduce((acc,tm) => (tm==a || tm==b) ? acc+1 : acc, 0)).includes(2);
+}
+
+function findOpponent(playoffs,seed,league){
+    var oppseed = 9-seed;
+    if(league=="NL"){
+        oppseed+= 8;
+    }
+    return playoffs[oppseed].abbreviation;
+}
+
+//tankathon!
