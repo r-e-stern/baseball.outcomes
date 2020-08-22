@@ -1,6 +1,3 @@
-var games = [];
-var sn = null; // for testing
-
 var FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta Braves","#13274F","ATL","NL","East"),
     new Franchise("Baltmore Orioles","#DF4601","BAL","AL","East"),new Franchise("Boston Red Sox","#BD3039","BOS","AL","East"),
     new Franchise("Chicago Cubs","#0E3386","CHC","NL","Central"),new Franchise("Chicago White Sox","#27251F","CHW","AL","Central"),
@@ -21,16 +18,16 @@ const DIVISIONS = [["CHW","CLE","DET","KCR","MIN"],["CHC","CIN","MIL","PIT","STL
 
 $(document).ready(function(){
     $.get('https://projects.fivethirtyeight.com/mlb-api/mlb_elo_latest.csv', function (csvdata){
-        for(str of csvdata.split("\n")){
-            games.push(new Game(str.csvToArray()));
+        cdata = csvdata.split("\n").map(x => x.csvToArray()).slice(1);
+        for(var i=0; i<4000; i++){
+            var sn = new Season(FRANCHISES.map(x => new Team(x.name,x.abbreviation,x.league,x.division)), cdata.map(x => new Game(x)));
+            sn.playSeason();
+            sn.populatePlayoffs();
+            FRANCHISES.map(x => x.tallySeason(sn));
         }
-        games.shift();
-        console.log(games);
-        sn = new Season(generateTeams(FRANCHISES),games);
-        sn.playSeason();
-        sn.populatePlayoffs();
-        console.log(sn.playoffs);
+        FRANCHISES.map(x => x.sortTallies());
     });
+    console.log(FRANCHISES);
 });
 
 function Game(arr){
@@ -94,19 +91,29 @@ function Franchise(name,hex,abbrev,lg,div){
     this.wins = new Tally();
     this.seeds = new Tally();
     this.opponents = new Tally();
+    this.pick = new Tally();
     this.sortTallies = function(){
       this.wins.sort();
       this.seeds.sort();
       this.opponents.sort();
+      this.pick.sort();
     };
     this.tallySeason = function(season){
         var wins = season.teams.find(x => x.abbreviation==this.abbreviation).wins;
-        var playoffs = season.teams.findIndex(x => x.abbreviation==this.abbreviation);
-        if(playoffs!=1 && this.league=="NL"){playoffs-=8;}
-        var opp = findOpponent(season.playoffs,playoffs, this.league);
+        var play = season.playoffs.findIndex(x => x.abbreviation==this.abbreviation)+1;
+        if(play!=0){
+            if(this.league=="NL"){
+                play-=8;
+            }
+            var opp = findOpponent(season.playoffs,play, this.league);
+        }else{
+            opp = "n/a";
+        }
+        var pick = season.draft.findIndex(x => x.abbreviation==this.abbreviation)+1;
         this.wins.add(wins);
-        this.seeds.add(playoffs);
+        this.seeds.add(play);
         this.opponents.add(opp);
+        this.pick.add(pick);
     }
 }
 
@@ -151,6 +158,7 @@ function Season(teams, games){
     this.teams = teams;
     this.games = games;
     this.playoffs = [];
+    this.draft = [];
     this.seasonPlayed = false;
     this.playSeason = function(){
         for(game of this.games){
@@ -175,6 +183,7 @@ function Season(teams, games){
         var nldivrunnersup = [nlwest[1],nlcent[1],nleast[1]].sort(playoffSort);
         var nlwildcards = [...nlwest.slice(2), ...nlcent.slice(2), ...nleast.slice(2)].sort(playoffSort);
         this.playoffs = [...aldivwinners, ...aldivrunnersup, ...alwildcards.slice(0,2), ...nldivwinners, ...nldivrunnersup, ...nlwildcards.slice(0,2)];
+        this.draft = this.teams.reverse().filter(x => x.abbreviation!="HOU");
     };
 }
 
@@ -185,7 +194,7 @@ function Tally(){
       this.tally.sort((a, b) => b[1]-a[1]);
     };
     this.tallied = function(item){
-        return tally.map(x => x[0]).includes(item);
+        return this.tally.map(x => x[0]).includes(item);
     };
     this.tallyInstance = function(item){
         this.tally = this.tally.map(x => (x[0]==item) ? [x[0],x[1]+1] : x);
@@ -202,10 +211,6 @@ function Tally(){
             this.addInstance(item);
         }
     };
-}
-
-function generateTeams(franch){
-    return franch.map(x => new Team(x.name,x.abbreviation,x.league,x.division));
 }
 
 function playoffSort(a,b){
@@ -225,7 +230,7 @@ function isDivisional(a,b) {
 }
 
 function findOpponent(playoffs,seed,league){
-    var oppseed = 9-seed;
+    var oppseed = 8-seed;
     if(league=="NL"){
         oppseed+= 8;
     }

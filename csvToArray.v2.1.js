@@ -88,4 +88,4 @@ String.prototype.csvToArray = function (o) {
         a.pop()
     }
     return a;
-}
+};
