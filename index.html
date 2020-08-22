@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>2020 MLB Outcome Projections</title>
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&family=Assistant:wght@200;300;400;600;800&display=swap" rel="stylesheet">
+    <link href="mlb-2020.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script src="csvToArray.v2.1.js"></script>
     <script src="mlb-2020.js"></script>
 </head>
 <body>
-
+<header>
+    <h2>2020 MLB Outcome Projections</h2>
+    <h3>Powered by the <a href="https://projects.fivethirtyeight.com/2020-mlb-predictions/">FiveThirtyEight.com MLB Predictions</a></h3>
+    <p>This tool <span id="replace">will simulate <input type="number" min="100" max="10000" value="4000" step="1"> iterations</span> of the MLB season using FiveThirtyEight's game-by-game predictions, and project each team's most likely number of wins, playoff seed and opponent (if any), and 2021 first-round draft pick (the Houston Astros have no 2021 first-round draft pick).</p>
+    <p>Select a team:
+        <select></select>
+        <button>Go!</button>
+    </p>
+</header>
 </body>
 </html>

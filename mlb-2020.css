@@ -1,0 +1,68 @@
+h2, h3, p, select,button{
+    text-align: center;
+    font-family: 'Assistant', sans-serif;
+}
+h2{
+    font-weight: 800;
+    margin-bottom: 0;
+}
+h3{
+    margin-top: 0;
+    font-weight: 300;
+}
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type='number']{
+    font-family: 'Anonymous Pro', monospace;
+    font-size: 18px;
+    color: #404040;
+    font-weight: 700;
+    border: 1px solid #d0d0d0;
+    border-radius: 3px;
+    outline: none;
+    text-align: center;
+    padding: none;
+    -moz-appearance: textfield;
+}
+input[type='number']:focus{
+    border: 1px solid black;
+    color: black;
+}
+button{
+    font-family: 'Anonymous Pro', monospace;
+    font-size: 18px;
+    color: #404040;
+    font-weight: 700;
+    border: 1px solid #d0d0d0;
+    border-radius: 3px;
+    outline: none;
+    background-color: transparent;
+    text-align: center;
+    margin-left: 2.5px;
+    padding: 5px 7px 5px 7px;
+}
+button:hover{
+    color: black;
+    border-color:black;
+    background-color:
+}
+select{
+    padding: 1px;
+}
+p,select,button{
+    font-size: 16px;
+}
+body{
+    min-width: 800px;
+    max-width: 1300px;
+    width: 70%;
+    margin: auto;
+}
+header{
+    min-width: 500px;
+    max-width: 1000px;
+    width: 65%;
+    margin: auto;
+}

@@ -1,5 +1,5 @@
-var FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta Braves","#13274F","ATL","NL","East"),
-    new Franchise("Baltmore Orioles","#DF4601","BAL","AL","East"),new Franchise("Boston Red Sox","#BD3039","BOS","AL","East"),
+let FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta Braves","#13274F","ATL","NL","East"),
+    new Franchise("Baltimore Orioles","#DF4601","BAL","AL","East"),new Franchise("Boston Red Sox","#BD3039","BOS","AL","East"),
     new Franchise("Chicago Cubs","#0E3386","CHC","NL","Central"),new Franchise("Chicago White Sox","#27251F","CHW","AL","Central"),
     new Franchise("Cincinnati Reds","#C6011F","CIN","NL","Central"),new Franchise("Cleveland Indians","#E31937","CLE","AL","Central"),
     new Franchise("Colorado Rockies","#33006F","COL","NL","West"),new Franchise("Detroit Tigers","#0C2340","DET","AL","Central"),
@@ -16,18 +16,44 @@ var FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","Wes
 const DIVISIONS = [["CHW","CLE","DET","KCR","MIN"],["CHC","CIN","MIL","PIT","STL"],["BAL","BOS","NYY","TBD","TOR"],
                    ["ATL","FLA","NYM","PHI","WSN"],["HOU","ANA","OAK","SEA","TEX"],["ARI","COL","LAD","SDP","SFG"]];
 
+let cdata;
+let r;
+
 $(document).ready(function(){
+    FRANCHISES.map(x => $("select").append("<option value='"+x.abbreviation+"'>"+x.name+"</option>"));
     $.get('https://projects.fivethirtyeight.com/mlb-api/mlb_elo_latest.csv', function (csvdata){
         cdata = csvdata.split("\n").map(x => x.csvToArray()).slice(1);
-        for(var i=0; i<4000; i++){
-            var sn = new Season(FRANCHISES.map(x => new Team(x.name,x.abbreviation,x.league,x.division)), cdata.map(x => new Game(x)));
+    });
+    $("button").click(function(){
+        let n = parseInt($("input").val());
+        for(let i=0; i<n; i++){
+            let sn = new Season(FRANCHISES.map(x => new Team(x.name,x.abbreviation,x.league,x.division)), cdata.map(x => new Game(x)));
             sn.playSeason();
             sn.populatePlayoffs();
             FRANCHISES.map(x => x.tallySeason(sn));
         }
         FRANCHISES.map(x => x.sortTallies());
+        r = range(FRANCHISES);
+        let selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
+        $("body").append("<canvas id=\"winChart\" width=\"850\" height=\"250\"></canvas>\n" +
+            "<canvas id=\"seedChart\" width=\"350\" height=\"350\"></canvas>\n" +
+            "<canvas id=\"oppChart\" width=\"500\" height=\"350\"></canvas>\n" +
+            "<canvas id=\"draftChart\" width=\"850\" height=\"250\"></canvas>");
+        selfran.generateCharts(n);
+        $("span").html("has simulated "+n+" iterations");
+        $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color});
+        $(this).off("click");
+        $(this).click(function(){
+            $("canvas").remove();
+            let selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
+            $("body").append("<canvas id=\"winChart\" width=\"850\" height=\"250\"></canvas>\n" +
+                "<canvas id=\"seedChart\" width=\"350\" height=\"350\"></canvas>\n" +
+                "<canvas id=\"oppChart\" width=\"500\" height=\"350\"></canvas>\n" +
+                "<canvas id=\"draftChart\" width=\"500\" height=\"350\"></canvas>");
+            selfran.generateCharts(n);
+            $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color});
+        });
     });
-    console.log(FRANCHISES);
 });
 
 function Game(arr){
@@ -67,9 +93,9 @@ function Game(arr){
         if(!this.finished){
             this.adjudicate();
         }
-        var div = isDivisional(this.team1, this.team2);
-        var w = this.winner;
-        var l = this.loser;
+        let div = isDivisional(this.team1, this.team2);
+        let w = this.winner;
+        let l = this.loser;
         return tm.map(function(t){
             if(t.abbreviation==w){
                 return t.winGame(div,l);
@@ -91,6 +117,9 @@ function Franchise(name,hex,abbrev,lg,div){
     this.wins = new Tally();
     this.seeds = new Tally();
     this.opponents = new Tally();
+    this.opponents.sort = function(){
+        this.tally.sort((a, b) => b[1]-a[1]);
+    };
     this.pick = new Tally();
     this.sortTallies = function(){
       this.wins.sort();
@@ -99,22 +128,92 @@ function Franchise(name,hex,abbrev,lg,div){
       this.pick.sort();
     };
     this.tallySeason = function(season){
-        var wins = season.teams.find(x => x.abbreviation==this.abbreviation).wins;
-        var play = season.playoffs.findIndex(x => x.abbreviation==this.abbreviation)+1;
+        let wins = season.teams.find(x => x.abbreviation==this.abbreviation).wins;
+        let play = season.playoffs.findIndex(x => x.abbreviation==this.abbreviation)+1;
+        let opp;
         if(play!=0){
             if(this.league=="NL"){
                 play-=8;
             }
-            var opp = findOpponent(season.playoffs,play, this.league);
+            opp = findOpponent(season.playoffs,play, this.league);
         }else{
             opp = "n/a";
         }
-        var pick = season.draft.findIndex(x => x.abbreviation==this.abbreviation)+1;
+        let pick = season.draft.findIndex(x => x.abbreviation==this.abbreviation)+1;
         this.wins.add(wins);
         this.seeds.add(play);
         this.opponents.add(opp);
         this.pick.add(pick);
-    }
+    };
+    this.generateWinChart = function(n){
+        let c = document.getElementById('winChart').getContext('2d');
+        let winChart = new Chart(c,{
+            type: 'bar',
+            data: {
+                labels: r.map(x => x.toString()),
+                datasets: [{
+                    label: "Wins",
+                    data: r.map(x => this.wins.countInstance(x)/n),
+                    backgroundColor: gradient("ffffff",this.color.substring(1),r.length-2),
+                    borderColor: Array(r.length).fill(this.color),
+                    borderWidth: 1
+                }]
+            }
+        });
+    };
+    this.generateSeedChart = function(n){
+        let d = document.getElementById('seedChart').getContext('2d');
+        let seedChart = new Chart(d,{
+            type: 'horizontalBar',
+            data: {
+                labels: this.seeds.tally.map(x => x[0]==0 ? "no berth" : x[0].toString()),
+                datasets: [{
+                    label: "Playoff Seed",
+                    data: this.seeds.tally.map(x => x[1]/n),
+                    backgroundColor: Array(this.seeds.tally.length).fill(this.color),
+                    borderColor: Array(this.seeds.tally.length).fill(this.color),
+                    borderWidth: 1
+                }]
+            }
+        });
+    };
+    this.generateOppChart = function(n){
+        let e = document.getElementById('oppChart').getContext('2d');
+        let oppChart = new Chart(e,{
+            type: 'bar',
+            data: {
+                labels: this.opponents.tally.map(x => x[0]),
+                datasets: [{
+                    label: "First-Round Playoff Opponent",
+                    data: this.opponents.tally.map(x => x[1]/n),
+                    backgroundColor: this.opponents.tally.map(x => findColor(x[0])),
+                    borderWidth: 1
+                }]
+            }
+        });
+    };
+    this.generateDraftChart = function(n){
+        let f = document.getElementById('draftChart').getContext('2d');
+        let draftChart = new Chart(f,{
+            type: 'bar',
+            data: {
+                labels: Array.from(new Array(29), (x, i) => (i+1).toString()),
+                datasets: [{
+                    label: "Draft pick",
+                    data: Array.from(new Array(29), (x, i) => this.pick.countInstance(i+1)/n),
+                    backgroundColor: gradient(this.color.substring(1),"ffffff",27),
+                    borderColor: Array(r.length).fill(this.color),
+                    borderWidth: 1
+                }]
+            }
+        });
+    };
+    this.generateCharts = function(n){
+        this.generateWinChart(n);
+        this.generateSeedChart(n);
+        this.generateOppChart(n);
+        this.generateDraftChart(n)
+    };
 }
 
 function Team(name,abbrev,lg,div){
@@ -149,7 +248,7 @@ function Team(name,abbrev,lg,div){
         return this.divwins/this.divgames;
     };
     this.hthwp = function(opp){
-          var games = this.gamelog.filter(x => x[0]==opp);
+          let games = this.gamelog.filter(x => x[0]==opp);
           return games.reduce((acc, x) => x[1] ? acc + 1 : acc, 0)/games.length;
     };
 }
@@ -170,18 +269,18 @@ function Season(teams, games){
     };
     this.populatePlayoffs = function(){
         this.sortStandings();
-        var alwest = this.teams.filter(x=> (x.division=="West" && x.league=="AL"));
-        var alcent = this.teams.filter(x=> (x.division=="Central" && x.league=="AL"));
-        var aleast = this.teams.filter(x=> (x.division=="East" && x.league=="AL"));
-        var nlwest = this.teams.filter(x=> (x.division=="West" && x.league=="NL"));
-        var nlcent = this.teams.filter(x=> (x.division=="Central" && x.league=="NL"));
-        var nleast = this.teams.filter(x=> (x.division=="East" && x.league=="NL"));
-        var aldivwinners = [alwest[0],alcent[0],aleast[0]].sort(playoffSort);
-        var aldivrunnersup = [alwest[1],alcent[1],aleast[1]].sort(playoffSort);
-        var alwildcards = [...alwest.slice(2), ...alcent.slice(2), ...aleast.slice(2)].sort(playoffSort);
-        var nldivwinners = [nlwest[0],nlcent[0],nleast[0]].sort(playoffSort);
-        var nldivrunnersup = [nlwest[1],nlcent[1],nleast[1]].sort(playoffSort);
-        var nlwildcards = [...nlwest.slice(2), ...nlcent.slice(2), ...nleast.slice(2)].sort(playoffSort);
+        let alwest = this.teams.filter(x=> (x.division=="West" && x.league=="AL"));
+        let alcent = this.teams.filter(x=> (x.division=="Central" && x.league=="AL"));
+        let aleast = this.teams.filter(x=> (x.division=="East" && x.league=="AL"));
+        let nlwest = this.teams.filter(x=> (x.division=="West" && x.league=="NL"));
+        let nlcent = this.teams.filter(x=> (x.division=="Central" && x.league=="NL"));
+        let nleast = this.teams.filter(x=> (x.division=="East" && x.league=="NL"));
+        let aldivwinners = [alwest[0],alcent[0],aleast[0]].sort(playoffSort);
+        let aldivrunnersup = [alwest[1],alcent[1],aleast[1]].sort(playoffSort);
+        let alwildcards = [...alwest.slice(2), ...alcent.slice(2), ...aleast.slice(2)].sort(playoffSort);
+        let nldivwinners = [nlwest[0],nlcent[0],nleast[0]].sort(playoffSort);
+        let nldivrunnersup = [nlwest[1],nlcent[1],nleast[1]].sort(playoffSort);
+        let nlwildcards = [...nlwest.slice(2), ...nlcent.slice(2), ...nleast.slice(2)].sort(playoffSort);
         this.playoffs = [...aldivwinners, ...aldivrunnersup, ...alwildcards.slice(0,2), ...nldivwinners, ...nldivrunnersup, ...nlwildcards.slice(0,2)];
         this.draft = this.teams.reverse().filter(x => x.abbreviation!="HOU");
     };
@@ -191,7 +290,7 @@ function Tally(){
     this.tally = [];
     this.count = 0;
     this.sort = function(){
-      this.tally.sort((a, b) => b[1]-a[1]);
+      this.tally.sort((a, b) => a[0]-b[0]);
     };
     this.tallied = function(item){
         return this.tally.map(x => x[0]).includes(item);
@@ -211,6 +310,13 @@ function Tally(){
             this.addInstance(item);
         }
     };
+    this.countInstance = function(item){
+        if(this.tallied(item)){
+            return this.tally.filter(x => x[0]==item)[0][1];
+        }else{
+            return 0;
+        }
+    }
 }
 
 function playoffSort(a,b){
@@ -230,11 +336,50 @@ function isDivisional(a,b) {
 }
 
 function findOpponent(playoffs,seed,league){
-    var oppseed = 8-seed;
+    let oppseed = 8-seed;
     if(league=="NL"){
         oppseed+= 8;
     }
     return playoffs[oppseed].abbreviation;
 }
 
-//tankathon!
+function gradient(colora, colorb, stops){
+    let colora1 = parseInt(colora.substring(0,2),16);
+    let colora2 = parseInt(colora.substring(2,4),16);
+    let colora3 = parseInt(colora.substring(4,6),16);
+    let colorb1 = parseInt(colorb.substring(0,2),16);
+    let colorb2 = parseInt(colorb.substring(2,4),16);
+    let colorb3 = parseInt(colorb.substring(4,6),16);
+    let weight = 0;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let color = [];
+    for(let i=0; i<(2+stops); i++){
+        weight = i/(1+stops);
+        r = Math.floor(colorb1*weight + colora1*(1-weight)).toString(16);
+        g = Math.floor(colorb2*weight + colora2*(1-weight)).toString(16);
+        b = Math.floor(colorb3*weight + colora3*(1-weight)).toString(16);
+        if(r.length==1){r="0"+r;}
+        if(g.length==1){g="0"+g;}
+        if(b.length==1){b="0"+b}
+        color.push("#"+r+g+b);
+    }
+    return color;
+}
+
+function findColor(abbrev){
+    return abbrev=="n/a" ? "#ffffff" : FRANCHISES.filter(x => x.abbreviation==abbrev)[0].color;
+}
+
+function range(franch){
+    let min = FRANCHISES.map(x => x.wins.tally[0][0]).reduce((a,b) => Math.min(a,b));
+    let max = FRANCHISES.map(x => x.wins.tally[x.wins.tally.length-1][0]).reduce((a,b) => Math.max(a,b));
+    let arr = [];
+    for(let i=min; i<=max; i++){
+        arr.push(i);
+    }
+    return arr;
+}
+
+//at this point, working on debugging charts
