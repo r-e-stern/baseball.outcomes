@@ -1,4 +1,4 @@
-h2, h3, p, select,button{
+h2, h3, h4, p, select,button{
     text-align: center;
     font-family: 'Assistant', sans-serif;
 }
@@ -7,6 +7,10 @@ h2{
     margin-bottom: 0;
 }
 h3{
+    margin: 0;
+    font-weight: 400;
+}
+h4{
     margin-top: 0;
     font-weight: 300;
 }
@@ -19,7 +23,7 @@ input[type='number']{
     font-size: 18px;
     color: #404040;
     font-weight: 700;
-    border: 1px solid #d0d0d0;
+    border: 1.5px solid #d0d0d0;
     border-radius: 3px;
     outline: none;
     text-align: center;
@@ -27,7 +31,7 @@ input[type='number']{
     -moz-appearance: textfield;
 }
 input[type='number']:focus{
-    border: 1px solid black;
+    border: 1.5px solid black;
     color: black;
 }
 button{
@@ -35,7 +39,7 @@ button{
     font-size: 18px;
     color: #404040;
     font-weight: 700;
-    border: 1px solid #d0d0d0;
+    border: 1.5px solid #d0d0d0;
     border-radius: 3px;
     outline: none;
     background-color: transparent;
@@ -46,19 +50,33 @@ button{
 button:hover{
     color: black;
     border-color:black;
-    background-color:
 }
 select{
     padding: 1px;
+    margin-left: 4px;
+    border: 1.5px solid #A71930;
+    outline: none;
+    font-weight: 600;
+    color: #A71930
+}
+option{
+    color: black;
 }
 p,select,button{
     font-size: 16px;
+    border-radius: 3px;
 }
 body{
     min-width: 800px;
     max-width: 1300px;
     width: 70%;
     margin: auto;
+}
+table, tr{
+    width: 100%;
+}
+td{
+    width: 50%;
 }
 header{
     min-width: 500px;

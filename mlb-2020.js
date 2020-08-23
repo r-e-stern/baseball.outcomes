@@ -15,18 +15,33 @@ let FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","Wes
     new Franchise("Toronto Blue Jays","#134A8E","TOR","AL","East"),new Franchise("Washington Nationals","#AB0003","WSN","NL","East")];
 const DIVISIONS = [["CHW","CLE","DET","KCR","MIN"],["CHC","CIN","MIL","PIT","STL"],["BAL","BOS","NYY","TBD","TOR"],
                    ["ATL","FLA","NYM","PHI","WSN"],["HOU","ANA","OAK","SEA","TEX"],["ARI","COL","LAD","SDP","SFG"]];
+const CHARTFRAMEWORK = "<table><tr><td colspan='2'><canvas id='winChart'></canvas></td></tr>" +
+    "<tr><td><canvas id='seedChart'></canvas></td>" +
+    "<td><canvas id='oppChart'></canvas></td></tr>" +
+    "<tr><td colspan='2'><canvas id='draftChart'></canvas></td></tr></table>";
+const LOADING = "<div class=\"lds-ripple\"><div></div><div></div></div>";
 
 let cdata;
 let r;
+let countdown;
+let lastcomplete;
+Chart.defaults.global.defaultFontFamily = "'Assistant', sans-serif";
+Chart.defaults.global.defaultFontSize = 14;
 
 $(document).ready(function(){
+    $("body").append(LOADING);
+    $(".lds-ripple div").hide();
     FRANCHISES.map(x => $("select").append("<option value='"+x.abbreviation+"'>"+x.name+"</option>"));
     $.get('https://projects.fivethirtyeight.com/mlb-api/mlb_elo_latest.csv', function (csvdata){
         cdata = csvdata.split("\n").map(x => x.csvToArray()).slice(1);
+        lastcomplete = cdata.find(x => x[0][24]!="");
+        $("h3").after("<h4>Probabilities last updated after "+lastcomplete[0][4]+"-"+lastcomplete[0][5]+" game on "+lastcomplete[0][0]+"</h4>");
     });
     $("button").click(function(){
+        // $(".lds-ripple div").toggle();
+        // requestAnimationFrame(()=>{console.log("loading")});
         let n = parseInt($("input").val());
-        for(let i=0; i<n; i++){
+        for(let i=n; i>0; i--){
             let sn = new Season(FRANCHISES.map(x => new Team(x.name,x.abbreviation,x.league,x.division)), cdata.map(x => new Game(x)));
             sn.playSeason();
             sn.populatePlayoffs();
@@ -35,25 +50,32 @@ $(document).ready(function(){
         FRANCHISES.map(x => x.sortTallies());
         r = range(FRANCHISES);
         let selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
-        $("body").append("<canvas id=\"winChart\" width=\"850\" height=\"250\"></canvas>\n" +
-            "<canvas id=\"seedChart\" width=\"350\" height=\"350\"></canvas>\n" +
-            "<canvas id=\"oppChart\" width=\"500\" height=\"350\"></canvas>\n" +
-            "<canvas id=\"draftChart\" width=\"850\" height=\"250\"></canvas>");
+        $("body").append(CHARTFRAMEWORK);
         selfran.generateCharts(n);
         $("span").html("has simulated "+n+" iterations");
         $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color});
-        $(this).off("click");
-        $(this).click(function(){
-            $("canvas").remove();
+        $("a").css({"color":selfran.color});
+        $(this).off("click").click(function(){
+            $("table").remove();
             let selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
-            $("body").append("<canvas id=\"winChart\" width=\"850\" height=\"250\"></canvas>\n" +
-                "<canvas id=\"seedChart\" width=\"350\" height=\"350\"></canvas>\n" +
-                "<canvas id=\"oppChart\" width=\"500\" height=\"350\"></canvas>\n" +
-                "<canvas id=\"draftChart\" width=\"500\" height=\"350\"></canvas>");
+            $("body").append(CHARTFRAMEWORK);
             selfran.generateCharts(n);
-            $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color});
+            $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color})
+            $("a").css({"color":selfran.color});
         });
     });
+    $(this).keypress(function(e){
+        if(e.which == 13){
+            $("button").click();
+        }
+    });
+    $("select").change(function(){
+        let col = findColor($(this).val());
+        $(this).css({"borderColor":col,
+            "color":col});
+        $(".lds-ripple div").css({"border-color":col})
+    });
+
 });
 
 function Game(arr){
@@ -158,6 +180,25 @@ function Franchise(name,hex,abbrev,lg,div){
                     borderColor: Array(r.length).fill(this.color),
                     borderWidth: 1
                 }]
+            },
+            options: {
+                scales : {
+                    yAxes: [{
+                        ticks: {
+                            callback: function(value, index, values){
+                                return (Math.round(value*10000)/100).toString() + "%";
+                            }
+                        }
+                    }]
+                },
+                tooltips: {
+                    callbacks :{
+                        title : function(){},
+                        label : (item, d) => "Probability of winning " + item.xLabel + " games:",
+                        afterLabel: (item, d) => (Math.round(item.yLabel*10000)/100).toString() + "%"
+                    }
+                    },
+                aspectRatio: 9/2
             }
         });
     };
@@ -174,13 +215,32 @@ function Franchise(name,hex,abbrev,lg,div){
                     borderColor: Array(this.seeds.tally.length).fill(this.color),
                     borderWidth: 1
                 }]
+            },
+            options: {
+                scales : {
+                    xAxes: [{
+                        ticks: {
+                            callback: function(value, index, values){
+                                return (Math.round(value*10000)/100).toString() + "%";
+                            }
+                        }
+                    }]
+                },
+                tooltips: {
+                    callbacks :{
+                        title : function(item, d){},
+                        label : (item, d) => item.yLabel=="no berth" ? "Probability of missing playoffs:" :"Probability of being the " + item.yLabel + " seed:",
+                        afterLabel: (item, d) => (Math.round(item.xLabel*10000)/100).toString() + "%"
+                    }
+                },
+                aspectRatio: 2
             }
         });
     };
     this.generateOppChart = function(n){
         let e = document.getElementById('oppChart').getContext('2d');
         let oppChart = new Chart(e,{
-            type: 'bar',
+            type: 'horizontalBar',
             data: {
                 labels: this.opponents.tally.map(x => x[0]),
                 datasets: [{
@@ -189,6 +249,25 @@ function Franchise(name,hex,abbrev,lg,div){
                     backgroundColor: this.opponents.tally.map(x => findColor(x[0])),
                     borderWidth: 1
                 }]
+            },
+            options: {
+                scales : {
+                    xAxes: [{
+                        ticks: {
+                            callback: function(value, index, values){
+                                return (Math.round(value*10000)/100).toString() + "%";
+                            }
+                        }
+                    }]
+                },
+                tooltips: {
+                    callbacks :{
+                        title : function(){},
+                        label : (item, d) => item.yLabel=="n/a" ? "Probability of missing playoffs:" : "Probability of facing " + item.yLabel + " in the first round:",
+                        afterLabel: (item, d) => (Math.round(item.xLabel*10000)/100).toString() + "%"
+                    }
+                },
+                aspectRatio: 2
             }
         });
     };
@@ -205,6 +284,25 @@ function Franchise(name,hex,abbrev,lg,div){
                     borderColor: Array(r.length).fill(this.color),
                     borderWidth: 1
                 }]
+            },
+            options: {
+                scales : {
+                    yAxes: [{
+                        ticks: {
+                            callback: function(value, index, values){
+                                return (Math.round(value*10000)/100).toString() + "%";
+                            }
+                        }
+                    }]
+                },
+                tooltips: {
+                    callbacks :{
+                        title : function(){},
+                        label : (item, d) => "Probability of picking #" + item.xLabel + " in the 2020 MLB Draft:",
+                        afterLabel: (item, d) => (Math.round(item.yLabel*10000)/100).toString() + "%"
+                    }
+                },
+                aspectRatio: 9/2
             }
         });
     };
@@ -382,4 +480,6 @@ function range(franch){
     return arr;
 }
 
-//at this point, working on debugging charts
+async function runIterations(n){
+
+}
