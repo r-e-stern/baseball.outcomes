@@ -1,68 +1,65 @@
-let FRANCHISES = [new Franchise("Arizona Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta Braves","#13274F","ATL","NL","East"),
-    new Franchise("Baltimore Orioles","#DF4601","BAL","AL","East"),new Franchise("Boston Red Sox","#BD3039","BOS","AL","East"),
-    new Franchise("Chicago Cubs","#0E3386","CHC","NL","Central"),new Franchise("Chicago White Sox","#27251F","CHW","AL","Central"),
-    new Franchise("Cincinnati Reds","#C6011F","CIN","NL","Central"),new Franchise("Cleveland Indians","#E31937","CLE","AL","Central"),
-    new Franchise("Colorado Rockies","#33006F","COL","NL","West"),new Franchise("Detroit Tigers","#0C2340","DET","AL","Central"),
-    new Franchise("Houston Astros","#EB6E1F","HOU","AL","West"),new Franchise("Kansas City Royals","#004687","KCR","AL","Central"),
-    new Franchise("Los Angeles Angels","#BA0021","ANA","AL","West"),new Franchise("Los Angeles Dodgers","#005A9C","LAD","NL","West"),
-    new Franchise("Miami Marlins","#00A3E0","FLA","NL","East"),new Franchise("Milwaukee Brewers","#FFC52F","MIL","NL","Central"),
-    new Franchise("Minnesota Twins","#002B5C","MIN","AL","Central"),new Franchise("New York Mets","#002D72","NYM","NL","East"),
-    new Franchise("New York Yankees","#0C2340","NYY","AL","East"),new Franchise("Oakland Athletics","#EFB21E","OAK","AL","West"),
-    new Franchise("Philadelphia Phillies","#E81828","PHI","NL","East"),new Franchise("Pittsburgh Pirates","#FDB827","PIT","NL","Central"),
-    new Franchise("San Diego Padres","#2F241D","SDP","NL","West"),new Franchise("San Francisco Giants","#FD5A1E","SFG","NL","West"),
-    new Franchise("Seattle Mariners","#005C5C","SEA","AL","West"),new Franchise("St. Louis Cardinals","#C41E3A","STL","NL","Central"),
-    new Franchise("Tampa Bay Rays","#8FBCE6","TBD","AL","East"),new Franchise("Texas Rangers","#003278","TEX","AL","West"),
-    new Franchise("Toronto Blue Jays","#134A8E","TOR","AL","East"),new Franchise("Washington Nationals","#AB0003","WSN","NL","East")];
+let FRANCHISES = [new Franchise("Arizona |Diamondbacks","#A71930","ARI","NL","West"),new Franchise("Atlanta |Braves","#13274F","ATL","NL","East"),
+    new Franchise("Baltimore |Orioles","#DF4601","BAL","AL","East"),new Franchise("Boston |Red Sox","#BD3039","BOS","AL","East"),
+    new Franchise("Chicago |Cubs","#0E3386","CHC","NL","Central"),new Franchise("Chicago |White Sox","#27251F","CHW","AL","Central"),
+    new Franchise("Cincinnati |Reds","#C6011F","CIN","NL","Central"),new Franchise("Cleveland |Indians","#E31937","CLE","AL","Central"),
+    new Franchise("Colorado |Rockies","#33006F","COL","NL","West"),new Franchise("Detroit |Tigers","#0C2340","DET","AL","Central"),
+    new Franchise("Houston |Astros","#EB6E1F","HOU","AL","West"),new Franchise("Kansas City |Royals","#004687","KCR","AL","Central"),
+    new Franchise("Los Angeles |Angels","#BA0021","ANA","AL","West"),new Franchise("Los Angeles |Dodgers","#005A9C","LAD","NL","West"),
+    new Franchise("Miami |Marlins","#00A3E0","FLA","NL","East"),new Franchise("Milwaukee |Brewers","#FFC52F","MIL","NL","Central"),
+    new Franchise("Minnesota |Twins","#002B5C","MIN","AL","Central"),new Franchise("New York |Mets","#002D72","NYM","NL","East"),
+    new Franchise("New York |Yankees","#0C2340","NYY","AL","East"),new Franchise("Oakland |Athletics","#EFB21E","OAK","AL","West"),
+    new Franchise("Philadelphia |Phillies","#E81828","PHI","NL","East"),new Franchise("Pittsburgh |Pirates","#FDB827","PIT","NL","Central"),
+    new Franchise("San Diego |Padres","#2F241D","SDP","NL","West"),new Franchise("San Francisco |Giants","#FD5A1E","SFG","NL","West"),
+    new Franchise("Seattle |Mariners","#005C5C","SEA","AL","West"),new Franchise("St. Louis |Cardinals","#C41E3A","STL","NL","Central"),
+    new Franchise("Tampa Bay |Rays","#8FBCE6","TBD","AL","East"),new Franchise("Texas |Rangers","#003278","TEX","AL","West"),
+    new Franchise("Toronto |Blue Jays","#134A8E","TOR","AL","East"),new Franchise("Washington |Nationals","#AB0003","WSN","NL","East")];
 const DIVISIONS = [["CHW","CLE","DET","KCR","MIN"],["CHC","CIN","MIL","PIT","STL"],["BAL","BOS","NYY","TBD","TOR"],
                    ["ATL","FLA","NYM","PHI","WSN"],["HOU","ANA","OAK","SEA","TEX"],["ARI","COL","LAD","SDP","SFG"]];
 const CHARTFRAMEWORK = "<table><tr><td colspan='2'><canvas id='winChart'></canvas></td></tr>" +
     "<tr><td><canvas id='seedChart'></canvas></td>" +
     "<td><canvas id='oppChart'></canvas></td></tr>" +
-    "<tr><td colspan='2'><canvas id='draftChart'></canvas></td></tr></table>";
-const LOADING = "<div class=\"lds-ripple\"><div></div><div></div></div>";
+    "<tr><td colspan='2'><canvas id='draftChart'></canvas></td></tr></table>" +
+    "<footer><a href='https://github.com/r-e-stern/baseball.outcomes/blob/master/mlb-2020.js'>Simulation code</a> &copy; 2020 R.E. Stern. " +
+    "This tool uses <a href='https://github.com/fivethirtyeight/data/tree/master/mlb-elo'>FiveThirtyEight game-by-game-predictions</a>, " +
+    "<a href='https://chartjs.org'>Chart.js</a>, and <a href='https://code.google.com/archive/p/csv-to-array/downloads'>csvToArray</a>.</footer>";
+const LOADING = "";
 
 let cdata;
 let r;
-let countdown;
+let n;
+let selfran;
+let gamesloaded = false;
 let lastcomplete;
 Chart.defaults.global.defaultFontFamily = "'Assistant', sans-serif";
 Chart.defaults.global.defaultFontSize = 14;
 
 $(document).ready(function(){
-    $("body").append(LOADING);
-    $(".lds-ripple div").hide();
-    FRANCHISES.map(x => $("select").append("<option value='"+x.abbreviation+"'>"+x.name+"</option>"));
+    FRANCHISES.map(x => {
+        if(x.abbreviation == "OAK"){
+            x.shortname = ()=>"A's";
+        }
+        $("select").append("<option value='"+x.abbreviation+"'>"+x.fullname()+"</option>")
+        return x;
+    });
     $.get('https://projects.fivethirtyeight.com/mlb-api/mlb_elo_latest.csv', function (csvdata){
         cdata = csvdata.split("\n").map(x => x.csvToArray()).slice(1);
         lastcomplete = cdata.find(x => x[0][24]!="");
-        $("h3").after("<h4>Probabilities last updated after "+lastcomplete[0][4]+"-"+lastcomplete[0][5]+" game on "+lastcomplete[0][0]+"</h4>");
+        $("h4").html("<h4>Probabilities last updated after "
+            +FRANCHISES.filter(x => x.abbreviation==lastcomplete[0][4])[0].shortname()+"-"
+            +FRANCHISES.filter(x => x.abbreviation==lastcomplete[0][5])[0].shortname()
+            +" game on "+lastcomplete[0][0]+"</h4>");
+        $("h4").toggle().fadeIn(1500);
+        gamesloaded = true;
     });
     $("button").click(function(){
-        // $(".lds-ripple div").toggle();
-        // requestAnimationFrame(()=>{console.log("loading")});
-        let n = parseInt($("input").val());
-        for(let i=n; i>0; i--){
-            let sn = new Season(FRANCHISES.map(x => new Team(x.name,x.abbreviation,x.league,x.division)), cdata.map(x => new Game(x)));
-            sn.playSeason();
-            sn.populatePlayoffs();
-            FRANCHISES.map(x => x.tallySeason(sn));
+        if(gamesloaded){
+            runSimulation();
+            $(this).off("click").click(function(){
+                $("table, footer").remove();
+                $("footer").remove();
+                displaySimulation();
+            });
         }
-        FRANCHISES.map(x => x.sortTallies());
-        r = range(FRANCHISES);
-        let selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
-        $("body").append(CHARTFRAMEWORK);
-        selfran.generateCharts(n);
-        $("span").html("has simulated "+n+" iterations");
-        $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color});
-        $("a").css({"color":selfran.color});
-        $(this).off("click").click(function(){
-            $("table").remove();
-            let selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
-            $("body").append(CHARTFRAMEWORK);
-            selfran.generateCharts(n);
-            $("h2").html("2020 "+selfran.name+" Outcome Projections").css({"color":selfran.color})
-            $("a").css({"color":selfran.color});
-        });
     });
     $(this).keypress(function(e){
         if(e.which == 13){
@@ -70,12 +67,11 @@ $(document).ready(function(){
         }
     });
     $("select").change(function(){
-        let col = findColor($(this).val());
+        let col = findColorfromAbbrev($(this).val());
         $(this).css({"borderColor":col,
             "color":col});
-        $(".lds-ripple div").css({"border-color":col})
+        $(".lds-f div").css({"borderColor": col})
     });
-
 });
 
 function Game(arr){
@@ -133,6 +129,12 @@ function Game(arr){
 function Franchise(name,hex,abbrev,lg,div){
     this.name = name;
     this.abbreviation = abbrev;
+    this.fullname = function(){
+        return this.name.replace("|","")
+    };
+    this.shortname = function(){
+        return this.name.split("|").pop();
+    };
     this.color = hex;
     this.league = lg;
     this.division = div;
@@ -192,9 +194,16 @@ function Franchise(name,hex,abbrev,lg,div){
                     }]
                 },
                 tooltips: {
+                    custom: tt => {
+                        if(tt.opacity==0){return;}
+                        tt.backgroundColor = tt.labelColors[0]['borderColor'];
+                    },
+                    displayColors: false,
                     callbacks :{
                         title : function(){},
-                        label : (item, d) => "Probability of winning " + item.xLabel + " games:",
+                        label : (item, d) => "Probability of the "+selfran.shortname()+" winning " + item.xLabel + " games:",
+                        labelTextColor : (item,d) => contrastText(selfran.color.replace("#","")),
+                        backgroundColor: (item,d) => selfran.color,
                         afterLabel: (item, d) => (Math.round(item.yLabel*10000)/100).toString() + "%"
                     }
                     },
@@ -227,9 +236,17 @@ function Franchise(name,hex,abbrev,lg,div){
                     }]
                 },
                 tooltips: {
+                    custom: tt => {
+                        if(tt.opacity==0){return;}
+                        tt.backgroundColor = tt.labelColors[0]['backgroundColor'];
+                    },
+                    displayColors: false,
                     callbacks :{
                         title : function(item, d){},
-                        label : (item, d) => item.yLabel=="no berth" ? "Probability of missing playoffs:" :"Probability of being the " + item.yLabel + " seed:",
+                        label : (item, d) => item.yLabel=="no berth" ? "Probability of the "+selfran.shortname()+" missing the playoffs:" :
+                            "Probability of the "+selfran.shortname()+" being the " + item.yLabel + " seed:",
+                        labelTextColor : (item,d) => contrastText(selfran.color.replace("#","")),
+                        backgroundColor: (item, d) => selfran.color,
                         afterLabel: (item, d) => (Math.round(item.xLabel*10000)/100).toString() + "%"
                     }
                 },
@@ -246,7 +263,7 @@ function Franchise(name,hex,abbrev,lg,div){
                 datasets: [{
                     label: "First-Round Playoff Opponent",
                     data: this.opponents.tally.map(x => x[1]/n),
-                    backgroundColor: this.opponents.tally.map(x => findColor(x[0])),
+                    backgroundColor: this.opponents.tally.map(x => findColorfromShortname(x[0])),
                     borderWidth: 1
                 }]
             },
@@ -261,9 +278,16 @@ function Franchise(name,hex,abbrev,lg,div){
                     }]
                 },
                 tooltips: {
+                    custom: tt => {
+                        if(tt.opacity==0){return;}
+                        tt.backgroundColor = tt.labelColors[0]['backgroundColor'];
+                    },
+                    displayColors: false,
                     callbacks :{
                         title : function(){},
-                        label : (item, d) => item.yLabel=="n/a" ? "Probability of missing playoffs:" : "Probability of facing " + item.yLabel + " in the first round:",
+                        label : (item, d) => item.yLabel=="n/a" ? "Probability of the "+selfran.shortname()+" missing playoffs:" :
+                            "Probability of the "+selfran.shortname()+" facing the " + item.yLabel + " in the first round:",
+                        labelTextColor : (item,d) => contrastText(findColorfromShortname(item.yLabel).replace("#","")),
                         afterLabel: (item, d) => (Math.round(item.xLabel*10000)/100).toString() + "%"
                     }
                 },
@@ -296,9 +320,15 @@ function Franchise(name,hex,abbrev,lg,div){
                     }]
                 },
                 tooltips: {
+                    custom: tt => {
+                        if(tt.opacity==0){return;}
+                        tt.backgroundColor = tt.labelColors[0]['borderColor'];
+                    },
+                    displayColors: false,
                     callbacks :{
                         title : function(){},
-                        label : (item, d) => "Probability of picking #" + item.xLabel + " in the 2020 MLB Draft:",
+                        label : (item, d) => "Probability of the "+selfran.shortname()+" picking #" + item.xLabel + " in the 2020 MLB Draft:",
+                        labelTextColor : (item,d) => contrastText(selfran.color.replace("#","")),
                         afterLabel: (item, d) => (Math.round(item.yLabel*10000)/100).toString() + "%"
                     }
                 },
@@ -316,6 +346,9 @@ function Franchise(name,hex,abbrev,lg,div){
 
 function Team(name,abbrev,lg,div){
     this.name = name;
+    this.shortname = function(){
+        return this.name.split("|").pop();
+    };
     this.abbreviation = abbrev;
     this.league = lg;
     this.division = div;
@@ -438,7 +471,7 @@ function findOpponent(playoffs,seed,league){
     if(league=="NL"){
         oppseed+= 8;
     }
-    return playoffs[oppseed].abbreviation;
+    return playoffs[oppseed].shortname();
 }
 
 function gradient(colora, colorb, stops){
@@ -466,8 +499,12 @@ function gradient(colora, colorb, stops){
     return color;
 }
 
-function findColor(abbrev){
-    return abbrev=="n/a" ? "#ffffff" : FRANCHISES.filter(x => x.abbreviation==abbrev)[0].color;
+function findColorfromShortname(sn){
+    return sn=="n/a" ? "#d0d0d0" : FRANCHISES.filter(x => x.shortname()==sn)[0].color;
+}
+
+function findColorfromAbbrev(a){
+    return a=="n/a" ? "#d0d0d0" : FRANCHISES.filter(x => x.abbreviation==a)[0].color;
 }
 
 function range(franch){
@@ -480,6 +517,48 @@ function range(franch){
     return arr;
 }
 
-// async function runIterations(n){
-//
-// }
+function runSimulation(){
+    n = parseInt($("input").val());
+    $(".lds-f div").slideDown(500);
+    for(let i=0; i<n; i++){
+        setTimeout(runIteration,i);
+    }
+    setTimeout(()=>{
+        FRANCHISES.map(x => x.sortTallies());
+        r = range(FRANCHISES);
+        $("span").html("has simulated "+n+" iterations");
+        displaySimulation();
+    },n)
+}
+
+function displaySimulation(){
+    selfran = FRANCHISES.filter(x => x.abbreviation==$("select").val())[0];
+    $("body").append(CHARTFRAMEWORK);
+    selfran.generateCharts(n);
+    $("h2").html("2020 "+selfran.fullname()+" Outcome Projections").css({"color":selfran.color});
+    $("a").css({"color":selfran.color});
+    $(".lds-f").remove();
+}
+
+function runIteration(){
+    let sn = new Season(FRANCHISES.map(x => new Team(x.name,x.abbreviation,x.league,x.division)), cdata.map(x => new Game(x)));
+    sn.playSeason();
+    sn.populatePlayoffs();
+    FRANCHISES.map(x => x.tallySeason(sn));
+    var k = parseInt($("input").val());
+    if(k>0){
+        k--;
+        $("input").val(k.toString());
+    }
+}
+
+function contrastText(colora) {
+    let r = parseInt(colora.substring(0, 2), 16);
+    let g = parseInt(colora.substring(2, 4), 16);
+    let b = parseInt(colora.substring(4, 6), 16);
+    if((r * 0.299 + g * 0.587 + b * 0.114)>150) {
+        return "#000000";
+    }else{
+        return "#ffffff";
+    }
+}

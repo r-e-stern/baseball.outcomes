@@ -90,3 +90,14 @@ header{
     width: 65%;
     margin: auto;
 }
+footer{
+    text-align: center;
+    width: 80%;
+    margin: auto;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #404040;
+    padding: 4px;
+    border-top: 1.5px solid #d0d0d0;
+    font-family: 'Assistant', sans-serif;
+}
