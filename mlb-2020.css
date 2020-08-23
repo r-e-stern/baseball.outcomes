@@ -4,7 +4,13 @@ h2, h3, h4, p, select,button{
 }
 h2{
     font-weight: 800;
+    width: 100%;
+    background-color: white;
+    padding: 5px;
     margin-bottom: 0;
+    display: block;
+    position: sticky;
+    top: 0;
 }
 h3{
     margin: 0;

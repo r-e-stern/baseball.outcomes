@@ -480,6 +480,6 @@ function range(franch){
     return arr;
 }
 
-async function runIterations(n){
-
-}
+// async function runIterations(n){
+//
+// }
