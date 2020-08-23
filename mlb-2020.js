@@ -34,13 +34,7 @@ Chart.defaults.global.defaultFontFamily = "'Assistant', sans-serif";
 Chart.defaults.global.defaultFontSize = 14;
 
 $(document).ready(function(){
-    FRANCHISES.map(x => {
-        if(x.abbreviation == "OAK"){
-            x.shortname = ()=>"A's";
-        }
-        $("select").append("<option value='"+x.abbreviation+"'>"+x.fullname()+"</option>")
-        return x;
-    });
+    FRANCHISES.map(x => $("select").append("<option value='"+x.abbreviation+"'>"+x.fullname()+"</option>"));
     $.get('https://projects.fivethirtyeight.com/mlb-api/mlb_elo_latest.csv', function (csvdata){
         cdata = csvdata.split("\n").map(x => x.csvToArray()).slice(1);
         lastcomplete = cdata.find(x => x[0][24]!="");
