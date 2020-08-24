@@ -193,6 +193,8 @@ function Franchise(name,hex,abbrev,lg,div){
                         tt.backgroundColor = tt.labelColors[0]['borderColor'];
                     },
                     displayColors: false,
+                    borderColor: "#ffffff",
+                    borderWidth: 1,
                     callbacks :{
                         title : function(){},
                         label : (item, d) => "Probability of the "+selfran.shortname()+" winning " + item.xLabel + " games:",
@@ -235,6 +237,8 @@ function Franchise(name,hex,abbrev,lg,div){
                         tt.backgroundColor = tt.labelColors[0]['backgroundColor'];
                     },
                     displayColors: false,
+                    borderColor: "#ffffff",
+                    borderWidth: 1,
                     callbacks :{
                         title : function(item, d){},
                         label : (item, d) => item.yLabel=="no berth" ? "Probability of the "+selfran.shortname()+" missing the playoffs:" :
@@ -277,6 +281,8 @@ function Franchise(name,hex,abbrev,lg,div){
                         tt.backgroundColor = tt.labelColors[0]['backgroundColor'];
                     },
                     displayColors: false,
+                    borderColor: "#ffffff",
+                    borderWidth: 1,
                     callbacks :{
                         title : function(){},
                         label : (item, d) => item.yLabel=="n/a" ? "Probability of the "+selfran.shortname()+" missing playoffs:" :
@@ -319,6 +325,8 @@ function Franchise(name,hex,abbrev,lg,div){
                         tt.backgroundColor = tt.labelColors[0]['borderColor'];
                     },
                     displayColors: false,
+                    borderColor: "#ffffff",
+                    borderWidth: 1,
                     callbacks :{
                         title : function(){},
                         label : (item, d) => "Probability of the "+selfran.shortname()+" picking #" + item.xLabel + " in the 2020 MLB Draft:",
