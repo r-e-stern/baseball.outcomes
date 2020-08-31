@@ -69,7 +69,7 @@ $(document).ready(function(){
 });
 
 function Game(arr){
-    this.date = arr[0][0];
+    this.date = new Date(arr[0][0].substring(0,4),arr[0][0].substring(5,7)-1,arr[0][0].substring(8,10));
     this.team1 = arr[0][4];
     this.team2 = arr[0][5];
     this.rating_prob1 = parseFloat(arr[0][20]);
@@ -329,7 +329,7 @@ function Franchise(name,hex,abbrev,lg,div){
                     borderWidth: 1,
                     callbacks :{
                         title : function(){},
-                        label : (item, d) => "Probability of the "+selfran.shortname()+" picking #" + item.xLabel + " in the 2020 MLB Draft:",
+                        label : (item, d) => "Probability of the "+selfran.shortname()+" picking #" + item.xLabel + " in the 2021 MLB Draft:",
                         labelTextColor : (item,d) => contrastText(selfran.color.replace("#","")),
                         afterLabel: (item, d) => (Math.round(item.yLabel*10000)/100).toString() + "%"
                     }
@@ -384,6 +384,10 @@ function Team(name,abbrev,lg,div){
           let games = this.gamelog.filter(x => x[0]==opp);
           return games.reduce((acc, x) => x[1] ? acc + 1 : acc, 0)/games.length;
     };
+    this.lastn = function(n){
+        this.gamelog.sort((a,b) => b[2].getTime()-a[2].getTime());
+        return this.gamelog.slice(0,n).filter(x => x[1]).length;
+    };
 }
 
 function Season(teams, games){
@@ -391,14 +395,13 @@ function Season(teams, games){
     this.games = games;
     this.playoffs = [];
     this.draft = [];
-    this.seasonPlayed = false;
     this.playSeason = function(){
         for(game of this.games){
             this.teams = game.play(this.teams);
         }
     };
     this.sortStandings = function(){
-        this.teams.sort(playoffSort); //add more robust tiebreakers later
+        this.teams.sort(playoffSort);
     };
     this.populatePlayoffs = function(){
         this.sortStandings();
@@ -460,6 +463,13 @@ function playoffSort(a,b){
     }else if(a.dwpct()!=b.dwpct()){
         return b.dwpct()-a.dwpct();
     }else{
+        var span = 20;
+        while(span>=Math.min(a.gamelog.length,b.gamelog.length)){
+            if(a.lastn(span)!=b.lastn(span)){
+                return b.lastn(span)-a.lastn(span);
+            }
+            span++;
+        }
         return Math.random()<.5;
     }
 }
