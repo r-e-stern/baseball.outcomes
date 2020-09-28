@@ -22,7 +22,6 @@ const CHARTFRAMEWORK = "<table><tr><td colspan='2'><canvas id='winChart'></canva
     "<footer><a href='https://github.com/r-e-stern/baseball.outcomes/blob/master/mlb-2020.js'>Simulation code</a> &copy; 2020 R.E. Stern. " +
     "This tool uses <a href='https://github.com/fivethirtyeight/data/tree/master/mlb-elo'>FiveThirtyEight game-by-game-predictions</a>, " +
     "<a href='https://chartjs.org'>Chart.js</a>, and <a href='https://code.google.com/archive/p/csv-to-array/downloads'>csvToArray</a>.</footer>";
-const LOADING = "";
 
 let cdata;
 let r;
@@ -35,13 +34,13 @@ Chart.defaults.global.defaultFontSize = 14;
 
 $(document).ready(function(){
     FRANCHISES.map(x => $("select").append("<option value='"+x.abbreviation+"'>"+x.fullname()+"</option>"));
-    $.get('https://projects.fivethirtyeight.com/mlb-api/mlb_elo_latest.csv', function (csvdata){
+    $.get('mlb_elo_latest.csv', function (csvdata){
         cdata = csvdata.split("\n").map(x => x.csvToArray()).slice(1);
         lastcomplete = cdata.find(x => x[0][24]!="");
-        $("h4").html("<h4>Probabilities last updated after "
-            +FRANCHISES.filter(x => x.abbreviation==lastcomplete[0][4])[0].shortname()+"-"
-            +FRANCHISES.filter(x => x.abbreviation==lastcomplete[0][5])[0].shortname()
-            +" game on "+lastcomplete[0][0]+"</h4>");
+        // $("h4").html("<h4>Probabilities last updated after "
+        //     +FRANCHISES.filter(x => x.abbreviation==lastcomplete[0][4])[0].shortname()+"-"
+        //     +FRANCHISES.filter(x => x.abbreviation==lastcomplete[0][5])[0].shortname()
+        //     +" game on "+lastcomplete[0][0]+"</h4>");
         $("h4").toggle().fadeIn(1500);
         gamesloaded = true;
     });

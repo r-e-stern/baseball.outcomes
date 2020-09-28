@@ -101,3 +101,14 @@ footer{
     border-top: 1.5px solid #d0d0d0;
     font-family: 'Assistant', sans-serif;
 }
+nav{
+    background-color: #ffc000;
+    font-family: "Open Sans", sans-serif;
+    font-size: 16px;
+    padding: 6px;
+    position: sticky;
+    top: 0;
+    text-align: center;
+    font-weight: 500;
+    width: 100%;
+}
