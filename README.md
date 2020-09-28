@@ -2,6 +2,8 @@
 **baseball.outcomes** is a tool that uses current FiveThirtyEight MLB predictions to project the probability of teams' specific end-season outcomes like seeding and playoff 
 opponents. Uses 2020 MLB playoff rules &amp; tiebreakers.
 
+As of the end of the 2020 regular season, **baseball.outcomes** has reverted to using 2020 preseason predictions. 
+
 ## How to use
 Users can input a number of iterations to run, select a team's results to display, and hit go to simulate the seasons and view the results. Once the simulations have run, there
 is no additional processing time and users can switch between teams by simply selecting a new team and hitting go.
